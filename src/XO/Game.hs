@@ -1,5 +1,5 @@
 module XO.Game
-  ( Game, Error(..)
+  ( Game, Outcome(..), Error(..)
   , new
   , play
   , grid, turn, outcome
