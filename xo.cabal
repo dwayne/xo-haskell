@@ -20,6 +20,16 @@ library
   build-depends:
     base >= 4.7 && < 5
 
+executable xo
+  hs-source-dirs: cli
+  default-language: Haskell2010
+
+  main-is: Main.hs
+
+  build-depends:
+    base >= 4.7 && < 5,
+    xo
+
 test-suite xo-tests
   hs-source-dirs: tests
   default-language: Haskell2010
