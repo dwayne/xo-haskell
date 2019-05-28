@@ -26,6 +26,10 @@ executable xo
 
   main-is: Main.hs
 
+  other-modules:
+    XO.CLI.Orchestrator.Interactive
+    XO.CLI.Player
+
   build-depends:
     base >= 4.7 && < 5,
     xo

@@ -1,7 +1,7 @@
 module XO.Game
   ( Game, Outcome(..), Error(..)
   , new
-  , play
+  , play, renew
   , grid, turn, outcome
   )
   where
@@ -50,6 +50,12 @@ playMark p mark grid =
 
       Just outcome ->
         GameOver nextGrid mark outcome
+
+
+renew :: Game -> Game
+renew (Playing _ m) = new m
+renew (GameOver _ m Win) = new m
+renew (GameOver _ m Squash) = new (Mark.swap m)
 
 
 grid :: Game -> Grid
