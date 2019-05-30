@@ -11,9 +11,8 @@ import XO.CLI.Player
 main :: IO ()
 main = do
   IO.hSetBuffering IO.stdout IO.NoBuffering
-  Interactive.run Human Human X
+  Interactive.run Human Computer X
 
 -- TODO:
 --
--- 1. Implement the computer player.
--- 2. Implement XO.CLI.Orchestrator.Noninteractive.
+-- 1. Implement XO.CLI.Orchestrator.Noninteractive.

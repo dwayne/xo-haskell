@@ -4,6 +4,7 @@ module XO.CLI.Orchestrator.Interactive (run) where
 import Control.Monad (when)
 import qualified Data.Char as Char
 import qualified Data.List as List
+import qualified System.Random as Random
 import qualified Text.Read as Read
 
 import XO.Game as Game
@@ -45,33 +46,37 @@ playOneGame currentPlayer nextPlayer humans game = do
 playOneTurn :: Player -> Int -> Game -> IO Game
 playOneTurn Human humans game = do
   let mark = Game.turn game
-  let grid = Game.grid game
 
   if humans == 2 then
     putStrLn (displayMark mark ++ "'s turn")
   else
     putStrLn ("Your turn (" ++ displayMark mark ++ ")")
 
-  putStrLn (displayGrid grid)
+  putStrLn (displayGrid (Game.grid game))
 
-  playOneTurnLoop grid game
+  playOneTurnLoop game
 
-playOneTurn Computer humans game =
-  return game
+playOneTurn Computer humans game = do
+  position <- getRandomPosition (Game.grid game)
+
+  putStrLn ("The computer played at " ++ displayPosition position)
+
+  let Right nextGame = Game.play position game
+  return nextGame
 
 
-playOneTurnLoop :: Grid -> Game -> IO Game
-playOneTurnLoop grid game = do
-  position <- getPosition grid True
+playOneTurnLoop :: Game -> IO Game
+playOneTurnLoop game = do
+  position <- getPosition (Game.grid game) True
 
   case Game.play position game of
     Left OutOfBounds -> do
       putStrLn "Try again, that position is out of bounds"
-      playOneTurnLoop grid game
+      playOneTurnLoop game
 
     Left Unavailable -> do
       putStrLn "Try again, that position is already taken"
-      playOneTurnLoop grid game
+      playOneTurnLoop game
 
     Right nextGame ->
       return nextGame
@@ -145,7 +150,7 @@ parsePosition input =
     [a, b] ->
       case (parseInt a, parseInt b) of
         (Just r, Just c) ->
-          Just (r-1, c-1)
+          Just (decrementPosition (r, c))
 
         _ ->
           Nothing
@@ -159,9 +164,17 @@ parseInt input = Read.readMaybe input
 
 
 firstAvailablePosition :: Grid -> Position
-firstAvailablePosition = incr . head . Grid.availablePositions
-  where
-    incr (r, c) = (r+1, c+1)
+firstAvailablePosition = incrementPosition . head . Grid.availablePositions
+
+
+getRandomPosition :: Grid -> IO Position
+getRandomPosition grid = do
+  let availablePositions = Grid.availablePositions grid
+  let n = length availablePositions
+
+  i <- Random.getStdRandom (Random.randomR (0, n-1))
+
+  return (availablePositions !! i)
 
 
 displayIntro :: String
@@ -177,6 +190,12 @@ displayIntro =
 displayMark :: Mark -> String
 displayMark X = "x"
 displayMark O = "o"
+
+
+displayPosition :: Position -> String
+displayPosition p = show r ++ ", " ++ show c
+  where
+    (r, c) = incrementPosition p
 
 
 displayGrid :: Grid -> String
@@ -203,3 +222,11 @@ displayGrid = displayTiles . Grid.toList
     displayTile (Just O) = " o "
 
     displaySep = "---+---+---"
+
+
+incrementPosition :: Position -> Position
+incrementPosition (r, c) = (r+1, c+1)
+
+
+decrementPosition :: Position -> Position
+decrementPosition (r, c) = (r-1, c-1)
