@@ -4,13 +4,13 @@ module XO.CLI.Orchestrator.Interactive (run) where
 import Control.Monad (when)
 import qualified Data.Char as Char
 import qualified Data.List as List
-import qualified System.Random as Random
 import qualified Text.Read as Read
 
 import XO.Game as Game
 import XO.Grid as Grid
-import XO.Mark as Mark
+import XO.Mark
 
+import XO.CLI.Orchestrator.Common
 import XO.CLI.Player as Player
 
 
@@ -167,16 +167,6 @@ firstAvailablePosition :: Grid -> Position
 firstAvailablePosition = incrementPosition . head . Grid.availablePositions
 
 
-getRandomPosition :: Grid -> IO Position
-getRandomPosition grid = do
-  let availablePositions = Grid.availablePositions grid
-  let n = length availablePositions
-
-  i <- Random.getStdRandom (Random.randomR (0, n-1))
-
-  return (availablePositions !! i)
-
-
 displayIntro :: String
 displayIntro =
   List.intercalate "\n"
@@ -185,11 +175,6 @@ displayIntro =
     , "Press Ctrl-C to exit at any time"
     , ""
     ]
-
-
-displayMark :: Mark -> String
-displayMark X = "x"
-displayMark O = "o"
 
 
 displayPosition :: Position -> String

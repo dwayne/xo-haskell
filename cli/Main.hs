@@ -1,18 +1,13 @@
 module Main (main) where
 
+
 import qualified System.IO as IO
 
-import XO.Mark
-
-import qualified XO.CLI.Orchestrator.Interactive as Interactive
-import XO.CLI.Player
+import XO.CLI.Orchestrator as Orchestrator
 
 
 main :: IO ()
 main = do
   IO.hSetBuffering IO.stdout IO.NoBuffering
-  Interactive.run Human Computer X
-
--- TODO:
---
--- 1. Implement XO.CLI.Orchestrator.Noninteractive.
+  let Just config = Orchestrator.mkConfig Human Computer X 25
+  Orchestrator.run config

@@ -27,7 +27,10 @@ executable xo
   main-is: Main.hs
 
   other-modules:
+    XO.CLI.Orchestrator.Common
     XO.CLI.Orchestrator.Interactive
+    XO.CLI.Orchestrator.Noninteractive
+    XO.CLI.Orchestrator
     XO.CLI.Player
 
   build-depends:
