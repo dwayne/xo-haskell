@@ -6,6 +6,7 @@ import qualified Data.Char as Char
 import qualified Data.List as List
 import qualified Text.Read as Read
 
+import qualified XO.AI as AI
 import XO.Game as Game
 import XO.Grid as Grid
 import XO.Mark
@@ -57,7 +58,7 @@ playOneTurn Human humans game = do
   playOneTurnLoop game
 
 playOneTurn Computer humans game = do
-  position <- getRandomPosition (Game.grid game)
+  position <- randomElem (AI.getPositions game)
 
   putStrLn ("The computer played at " ++ displayPosition position)
 
