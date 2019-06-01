@@ -1,4 +1,4 @@
-module XO.AI (getPosition) where
+module XO.AI (getPositions) where
 
 
 import XO.Game as Game
@@ -8,62 +8,78 @@ import XO.Referee as Referee
 
 
 type Score = Int
-type Result = (Score, Maybe Position)
+type Depth = Int
+type Result = (Score, Depth, [Position])
 
 
-getPosition :: Game -> Maybe Position
-getPosition game = snd (maximize max min (Game.grid game))
+getPositions :: Game -> [Position]
+getPositions game
+  | n == 9 = availablePositions
+  | n == 1 = availablePositions
+  | otherwise = positions (maximize max min 0 grid)
   where
+    n = length availablePositions
+    positions (_, _, ps) = ps
+
     max = Game.turn game
     min = Mark.swap max
 
+    availablePositions = Grid.availablePositions grid
+    grid = Game.grid game
 
-maximize :: Mark -> Mark -> Grid -> Result
-maximize max min grid =
+
+maximize :: Mark -> Mark -> Depth -> Grid -> Result
+maximize max min depth grid =
   case Referee.unsafeDecide grid min of
     Nothing ->
       let
         positions = Grid.availablePositions grid
         set p = Grid.set p max grid
         nextGrids = map set positions
-        mins = map (minimize min max) nextGrids
-        combine (r, p) = (fst r, Just p)
+        mins = map (minimize min max (depth+1)) nextGrids
+        combine ((s, d, _), p) = (s, d, [p])
         nextResults = map combine (zip mins positions)
       in
         foldr1 maxResult nextResults
 
     Just outcome ->
-      (minScore outcome, Nothing)
+      (minScore outcome, depth, [])
 
 
-minimize :: Mark -> Mark -> Grid -> Result
-minimize min max grid =
+minimize :: Mark -> Mark -> Depth -> Grid -> Result
+minimize min max depth grid =
   case Referee.unsafeDecide grid max of
     Nothing ->
       let
         positions = Grid.availablePositions grid
         set p = Grid.set p min grid
         nextGrids = map set positions
-        maxs = map (maximize max min) nextGrids
-        combine (r, p) = (fst r, Just p)
+        maxs = map (maximize max min (depth+1)) nextGrids
+        combine ((s, d, _), p) = (s, d, [p])
         nextResults = map combine (zip maxs positions)
       in
         foldr1 minResult nextResults
 
     Just outcome ->
-      (maxScore outcome, Nothing)
+      (maxScore outcome, depth, [])
 
 
 maxResult :: Result -> Result -> Result
-maxResult r1@(s1, _) r2@(s2, _)
-  | s1 >= s2 = r1
-  | otherwise = r2
+maxResult r1@(s1, d1, ps1) r2@(s2, d2, ps2)
+  | s1 > s2 = r1
+  | s2 > s1 = r2
+  | d1 < d2 = r1
+  | d2 < d1 = r2
+  | otherwise = (s1, d1, ps1 ++ ps2)
 
 
 minResult :: Result -> Result -> Result
-minResult r1@(s1, _) r2@(s2, _)
-  | s1 <= s2 = r1
-  | otherwise = r2
+minResult r1@(s1, d1, ps1) r2@(s2, d2, ps2)
+  | s1 < s2 = r1
+  | s2 < s1 = r2
+  | d1 < d2 = r1
+  | d2 < d1 = r2
+  | otherwise = (s1, d1, ps1 ++ ps2)
 
 
 maxScore :: Outcome -> Score

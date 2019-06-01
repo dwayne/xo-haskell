@@ -38,7 +38,7 @@ playOneGame game = do
 playOneTurn :: Game -> IO Game
 playOneTurn game = return nextGame
   where
-    Just position = AI.getPosition game
+    position = head (AI.getPositions game)
     Right nextGame = Game.play position game
 
 

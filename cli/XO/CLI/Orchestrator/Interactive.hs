@@ -58,7 +58,7 @@ playOneTurn Human humans game = do
   playOneTurnLoop game
 
 playOneTurn Computer humans game = do
-  let Just position = AI.getPosition game
+  position <- randomElem (AI.getPositions game)
 
   putStrLn ("The computer played at " ++ displayPosition position)
 

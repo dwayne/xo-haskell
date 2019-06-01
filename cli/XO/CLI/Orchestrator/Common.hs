@@ -1,5 +1,5 @@
 module XO.CLI.Orchestrator.Common
-  ( getRandomPosition
+  ( randomElem
   , displayMark
   )
   where
@@ -7,18 +7,14 @@ module XO.CLI.Orchestrator.Common
 
 import qualified System.Random as Random
 
-import XO.Grid as Grid
 import XO.Mark
 
 
-getRandomPosition :: Grid -> IO Position
-getRandomPosition grid = do
-  let availablePositions = Grid.availablePositions grid
-  let n = length availablePositions
-
-  i <- Random.getStdRandom (Random.randomR (0, n-1))
-
-  return (availablePositions !! i)
+randomElem :: [a] -> IO a
+randomElem xs = rand >>= (return . ((!!) xs))
+  where
+    rand = Random.getStdRandom (Random.randomR (0, n-1))
+    n = length xs
 
 
 displayMark :: Mark -> String
