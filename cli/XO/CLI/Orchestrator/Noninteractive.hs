@@ -1,6 +1,7 @@
 module XO.CLI.Orchestrator.Noninteractive (run) where
 
 
+import XO.AI as AI
 import XO.Game as Game
 import XO.Mark
 
@@ -35,11 +36,10 @@ playOneGame game = do
 
 
 playOneTurn :: Game -> IO Game
-playOneTurn game = do
-  position <- getRandomPosition (Game.grid game)
-
-  let Right nextGame = Game.play position game
-  return nextGame
+playOneTurn game = return nextGame
+  where
+    Just position = AI.getPosition game
+    Right nextGame = Game.play position game
 
 
 handleGameOver :: Outcome -> Game -> IO Game
