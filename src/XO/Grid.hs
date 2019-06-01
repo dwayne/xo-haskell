@@ -3,6 +3,7 @@ module XO.Grid
   , empty
   , set
   , isAvailable, inBounds
+  , availablePositions
   , toList
   )
   where
@@ -37,6 +38,13 @@ isAvailable p (Grid moves) =
 inBounds :: Position -> Bool
 inBounds (r, c) =
   r >= 0 && r < size && c >= 0 && c < size
+
+
+availablePositions :: Grid -> [Position]
+availablePositions (Grid moves) =
+  [(r, c) | r <- [0..n], c <- [0..n], isNothing (lookup (r, c) moves)]
+  where
+    n = size-1
 
 
 toList :: Grid -> [Tile]
