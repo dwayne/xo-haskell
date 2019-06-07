@@ -5,6 +5,7 @@ import Test.Hspec
 
 import qualified Test.XO.AI
 import qualified Test.XO.Game
+import qualified Test.XO.Mark
 import qualified Test.XO.Referee
 
 
@@ -16,4 +17,5 @@ spec :: Spec
 spec = do
   describe "XO.AI" Test.XO.AI.spec
   describe "XO.Game" Test.XO.Game.spec
+  describe "XO.Mark" Test.XO.Mark.spec
   describe "XO.Referee" Test.XO.Referee.spec
