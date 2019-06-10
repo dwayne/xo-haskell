@@ -51,6 +51,7 @@ test-suite xo-tests
   other-modules:
     Test.XO.AI
     Test.XO.Game
+    Test.XO.Grid
     Test.XO.Mark
     Test.XO.Referee
 
