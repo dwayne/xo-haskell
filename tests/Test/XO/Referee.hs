@@ -17,7 +17,7 @@ spec =
                      Grid.set (1,1) O $
                        Grid.set (0,1) X $
                          Grid.set (1,0) O $
-                           Grid.set (0,0) X empty
+                           Grid.set (0,0) X Grid.empty
 
         Referee.unsafeDecide grid X `shouldBe` Just Win
 
@@ -27,7 +27,7 @@ spec =
                      Grid.set (1,1) X $
                        Grid.set (2,1) O $
                          Grid.set (1,0) X $
-                           Grid.set (2,0) O empty
+                           Grid.set (2,0) O Grid.empty
 
         Referee.unsafeDecide grid O `shouldBe` Just Win
 
@@ -41,12 +41,12 @@ spec =
                              Grid.set (0,1) O $
                                Grid.set (2,2) X $
                                  Grid.set (1,1) O $
-                                   Grid.set (0,0) X empty
+                                   Grid.set (0,0) X Grid.empty
 
         Referee.unsafeDecide grid X `shouldBe` Just Squash
 
-    context "when it is too early to decide an outcome" $ do
+    context "after 2 plays" $ do
       it "returns Nothing" $ do
-        let grid = Grid.set (1,1) O (Grid.set (0,0) X empty)
+        let grid = Grid.set (1,1) O (Grid.set (0,0) X Grid.empty)
 
-        Referee.unsafeDecide grid X `shouldBe` Nothing
+        Referee.unsafeDecide grid O `shouldBe` Nothing
