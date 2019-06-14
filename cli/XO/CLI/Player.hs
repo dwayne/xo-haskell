@@ -10,6 +10,11 @@ data Player
   | Computer
 
 
+instance Show Player where
+  show Human = "human"
+  show Computer = "computer"
+
+
 numHumans :: Player -> Player -> Int
 numHumans Human Human = 2
 numHumans Human Computer = 1

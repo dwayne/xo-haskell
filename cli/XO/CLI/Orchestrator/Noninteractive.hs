@@ -5,8 +5,6 @@ import XO.AI as AI
 import XO.Game as Game
 import XO.Mark
 
-import XO.CLI.Orchestrator.Common
-
 
 run :: Mark -> Int -> IO ()
 run first rounds = runLoop rounds (Game.new first)
@@ -46,7 +44,7 @@ handleGameOver :: Outcome -> Game -> IO Game
 handleGameOver outcome game = do
   case outcome of
     Win ->
-      putStr (displayMark (Game.turn game))
+      putStr (show (Game.turn game))
 
     Squash ->
       putStr "."

@@ -4,6 +4,7 @@ module XO.CLI.Orchestrator.Interactive (run) where
 import Control.Monad (when)
 import qualified Data.Char as Char
 import qualified Data.List as List
+import qualified System.Random as Random
 import qualified Text.Read as Read
 
 import qualified XO.AI as AI
@@ -11,7 +12,6 @@ import XO.Game as Game
 import XO.Grid as Grid
 import XO.Mark
 
-import XO.CLI.Orchestrator.Common
 import XO.CLI.Player as Player
 
 
@@ -46,12 +46,12 @@ playOneGame currentPlayer nextPlayer humans game = do
 
 playOneTurn :: Player -> Int -> Game -> IO Game
 playOneTurn Human humans game = do
-  let mark = Game.turn game
+  let mark = show (Game.turn game)
 
   if humans == 2 then
-    putStrLn (displayMark mark ++ "'s turn")
+    putStrLn (mark ++ "'s turn")
   else
-    putStrLn ("Your turn (" ++ displayMark mark ++ ")")
+    putStrLn ("Your turn (" ++ mark ++ ")")
 
   putStrLn (displayGrid (Game.grid game))
 
@@ -87,7 +87,7 @@ handleGameOver :: Outcome -> Player -> Int -> Game -> IO Game
 handleGameOver outcome player humans game = do
   case (outcome, player, humans) of
     (Win, Human, 2) ->
-      putStrLn ("Congratulations! " ++ displayMark (Game.turn game) ++ " won.")
+      putStrLn ("Congratulations! " ++ show (Game.turn game) ++ " won.")
 
     (Win, Human, 1) ->
       putStrLn "Congratulations! You won."
@@ -101,6 +101,9 @@ handleGameOver outcome player humans game = do
   putStrLn (displayGrid (Game.grid game))
 
   return game
+
+
+-- INPUT
 
 
 getContinue :: IO Bool
@@ -151,7 +154,7 @@ parsePosition input =
     [a, b] ->
       case (parseInt a, parseInt b) of
         (Just r, Just c) ->
-          Just (decrementPosition (r, c))
+          Just (decrement (r, c))
 
         _ ->
           Nothing
@@ -165,7 +168,10 @@ parseInt input = Read.readMaybe input
 
 
 firstAvailablePosition :: Grid -> Position
-firstAvailablePosition = incrementPosition . head . Grid.availablePositions
+firstAvailablePosition = increment . head . Grid.availablePositions
+
+
+-- OUTPUT
 
 
 displayIntro :: String
@@ -181,7 +187,7 @@ displayIntro =
 displayPosition :: Position -> String
 displayPosition p = show r ++ ", " ++ show c
   where
-    (r, c) = incrementPosition p
+    (r, c) = increment p
 
 
 displayGrid :: Grid -> String
@@ -210,9 +216,19 @@ displayGrid = displayTiles . Grid.toList
     displaySep = "---+---+---"
 
 
-incrementPosition :: Position -> Position
-incrementPosition (r, c) = (r+1, c+1)
+-- HELPERS
 
 
-decrementPosition :: Position -> Position
-decrementPosition (r, c) = (r-1, c-1)
+increment :: Position -> Position
+increment (r, c) = (r+1, c+1)
+
+
+decrement :: Position -> Position
+decrement (r, c) = (r-1, c-1)
+
+
+randomElem :: [a] -> IO a
+randomElem xs = rand >>= (return . ((!!) xs))
+  where
+    rand = Random.getStdRandom (Random.randomR (0, n-1))
+    n = length xs

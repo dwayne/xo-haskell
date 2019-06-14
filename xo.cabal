@@ -30,7 +30,6 @@ executable xo
   other-modules:
     XO.CLI.Options
     XO.CLI.Orchestrator
-    XO.CLI.Orchestrator.Common
     XO.CLI.Orchestrator.Interactive
     XO.CLI.Orchestrator.Noninteractive
     XO.CLI.Player

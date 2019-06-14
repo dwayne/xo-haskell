@@ -32,14 +32,14 @@ options = Options
       ( short 'x'
       <> metavar "PLAYER"
       <> value Human
-      <> showDefaultWith (showPlayer)
+      <> showDefault
       <> help ("The player in control of x, " ++ playerHelp)
       )
   <*> option player
       ( short 'o'
       <> metavar "PLAYER"
       <> value Computer
-      <> showDefaultWith (showPlayer)
+      <> showDefault
       <> help ("The player in control of o, " ++ playerHelp)
       )
   <*> option mark
@@ -47,7 +47,7 @@ options = Options
       <> short 'f'
       <> metavar "MARK"
       <> value X
-      <> showDefaultWith (showMark)
+      <> showDefault
       <> help "Who plays first, MARK=x|o"
       )
   <*> option positive
@@ -94,16 +94,3 @@ positive = eitherReader parsePositive
 
         _ ->
           Left "expected a positive integer"
-
-
--- String representations
-
-
-showPlayer :: Player -> String
-showPlayer Human = "human"
-showPlayer Computer = "computer"
-
-
-showMark :: Mark -> String
-showMark X = "x"
-showMark O = "o"
