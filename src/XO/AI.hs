@@ -1,3 +1,8 @@
+-- | The computer's \"brain\".
+--
+-- This module exports a functon called 'getPositions' that uses a
+-- <https://en.wikipedia.org/wiki/Minimax minimax> algorithm to determine the
+-- best positions to place a mark based on the configuration of a game's grid.
 module XO.AI (getPositions) where
 
 
@@ -12,6 +17,17 @@ type Depth = Int
 type Result = (Score, Depth, [Position])
 
 
+-- | Returns the best positions to place a mark based on the configuration of
+-- the given game's grid.
+--
+-- In general, it uses a <https://en.wikipedia.org/wiki/Minimax minimax>
+-- algorithm. However, there are two cases where an analysis is not needed:
+--
+-- 1. When every position is available then every position is immediately
+--    returned.
+--
+-- 2. When only one position is available then that position is immediately
+--    returned.
 getPositions :: Game -> [Position]
 getPositions game
   | n == 9 = availablePositions
