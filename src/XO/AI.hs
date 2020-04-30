@@ -1,107 +1,142 @@
 -- | The computer's \"brain\".
 --
--- This module exports a functon called 'getPositions' that uses a
+-- It exports the 'getPositions' function which uses a
 -- <https://en.wikipedia.org/wiki/Minimax minimax> algorithm to determine the
--- best positions to place a mark based on the configuration of a game's grid.
+-- positions of the best tiles to mark based on the state of a game.
 module XO.AI (getPositions) where
 
 
-import XO.Game as Game
+import Data.Maybe (maybeToList)
+
+
+import qualified XO.Game as Game
+import XO.Game (Game)
 import XO.Grid as Grid
 import XO.Mark as Mark
 import XO.Referee as Referee
 
 
-type Score = Int
-type Depth = Int
-type Result = (Score, Depth, [Position])
-
-
--- | Returns the best positions to place a mark based on the configuration of
--- the given game's grid.
+-- | Returns the positions of the best tiles to mark based on the state of the
+-- game.
 --
 -- In general, it uses a <https://en.wikipedia.org/wiki/Minimax minimax>
--- algorithm. However, there are two cases where an analysis is not needed:
+-- algorithm. However, there are three cases where minimax is not needed:
 --
--- 1. When every position is available then every position is immediately
---    returned.
+-- 1. When the game is over. There are no available positions and so the empty
+--    list has to be returned.
 --
--- 2. When only one position is available then that position is immediately
---    returned.
+-- 2. When only one position is available, that position must be returned.
+--
+-- 3. When every position is available, every position can be returned.
 getPositions :: Game -> [Position]
 getPositions game
-  | n == 9 = availablePositions
-  | n == 1 = availablePositions
-  | otherwise = positions (maximize max min 0 grid)
+  | n == 0 || n == 1 || n == 9 = availablePositions
+  | otherwise                  = positions $ minimax game
   where
     n = length availablePositions
-    positions (_, _, ps) = ps
-
-    max = Game.turn game
-    min = Mark.swap max
-
-    availablePositions = Grid.availablePositions grid
-    grid = Game.grid game
+    availablePositions = Game.availablePositions game
 
 
-maximize :: Mark -> Mark -> Depth -> Grid -> Result
-maximize max min depth grid =
-  case Referee.unsafeDecide grid min of
+-- Minimax
+
+
+minimax :: Game -> Value
+minimax = maximize 0 . gameTree
+
+
+type Depth = Int
+
+
+maximize :: Depth -> Tree Game -> Value
+maximize depth (Node game []) = (minScore game, depth, [])
+maximize depth (Node _ subtrees) =
+  foldl1 maxSum $ map (evaluate minimize depth) subtrees
+
+
+minimize :: Depth -> Tree Game -> Value
+minimize depth (Node game []) = (maxScore game, depth, [])
+minimize depth (Node _ subtrees) =
+  foldl1 minSum $ map (evaluate maximize depth) subtrees
+
+
+evaluate :: (Depth -> Tree Game -> Value) -> Depth -> Tree Game -> Value
+evaluate f depth subtree@(Node game _) =
+  updatePositions (lastPosition game) (f (depth+1) subtree)
+  where
+    lastPosition = maybeToList . Game.lastPosition
+
+
+-- Game Tree
+
+
+gameTree :: Game -> Tree Game
+gameTree = iterateTree moves
+
+
+moves :: Game -> [Game]
+moves game =
+  map (fromRight . flip Game.play game) (Game.availablePositions game)
+  where
+    fromRight (Right r) = r
+
+
+data Tree a = Node a [Tree a]
+
+
+iterateTree :: (a -> [a]) -> a -> Tree a
+iterateTree f x = Node x (map (iterateTree f) (f x))
+
+
+-- Score
+
+
+type Score = Int
+
+
+maxScore :: Game -> Score
+maxScore game =
+  case Game.outcome game of
     Nothing ->
-      let
-        positions = Grid.availablePositions grid
-        set p = Grid.set p max grid
-        nextGrids = map set positions
-        mins = map (minimize min max (depth+1)) nextGrids
-        combine ((s, d, _), p) = (s, d, [p])
-        nextResults = map combine (zip mins positions)
-      in
-        foldr1 maxResult nextResults
+      0
 
-    Just outcome ->
-      (minScore outcome, depth, [])
+    Just Squash ->
+      1
+
+    Just Win ->
+      2
 
 
-minimize :: Mark -> Mark -> Depth -> Grid -> Result
-minimize min max depth grid =
-  case Referee.unsafeDecide grid max of
-    Nothing ->
-      let
-        positions = Grid.availablePositions grid
-        set p = Grid.set p min grid
-        nextGrids = map set positions
-        maxs = map (maximize max min (depth+1)) nextGrids
-        combine ((s, d, _), p) = (s, d, [p])
-        nextResults = map combine (zip maxs positions)
-      in
-        foldr1 minResult nextResults
-
-    Just outcome ->
-      (maxScore outcome, depth, [])
-
-
-maxResult :: Result -> Result -> Result
-maxResult r1@(s1, d1, ps1) r2@(s2, d2, ps2)
-  | s1 > s2 = r1
-  | s2 > s1 = r2
-  | d1 < d2 = r1
-  | d2 < d1 = r2
-  | otherwise = (s1, d1, ps1 ++ ps2)
-
-
-minResult :: Result -> Result -> Result
-minResult r1@(s1, d1, ps1) r2@(s2, d2, ps2)
-  | s1 < s2 = r1
-  | s2 < s1 = r2
-  | d1 < d2 = r1
-  | d2 < d1 = r2
-  | otherwise = (s1, d1, ps1 ++ ps2)
-
-
-maxScore :: Outcome -> Score
-maxScore Win = 2
-maxScore Squash = 1
-
-
-minScore :: Outcome -> Score
+minScore :: Game -> Score
 minScore = negate . maxScore
+
+
+-- Value
+
+
+type Value = (Score, Depth, [Position])
+
+
+positions :: Value -> [Position]
+positions (_, _, ps) = ps
+
+
+updatePositions :: [Position] -> Value -> Value
+updatePositions ps (s, d, _) = (s, d, ps)
+
+
+minSum :: Value -> Value -> Value
+minSum v1@(s1, d1, ps1) v2@(s2, d2, ps2)
+  | s1 < s2   = v1
+  | s2 < s1   = v2
+  | d1 < d2   = v1
+  | d2 < d1   = v2
+  | otherwise = (s1, d1, ps1 ++ ps2)
+
+
+maxSum :: Value -> Value -> Value
+maxSum v1@(s1, d1, ps1) v2@(s2, d2, ps2)
+  | s1 > s2   = v1
+  | s2 > s1   = v2
+  | d1 < d2   = v1
+  | d2 < d1   = v2
+  | otherwise = (s1, d1, ps1 ++ ps2)

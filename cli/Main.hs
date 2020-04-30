@@ -8,6 +8,4 @@ import XO.CLI.Orchestrator (run)
 
 
 main :: IO ()
-main = do
-  IO.hSetBuffering IO.stdout IO.NoBuffering
-  parseOptions >>= run
+main = IO.hSetBuffering IO.stdout IO.NoBuffering >> parseOptions >>= run

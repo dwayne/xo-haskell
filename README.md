@@ -12,7 +12,7 @@ Welcome to Tic-tac-toe
 Play as many games as you want
 Press Ctrl-C to exit at any time
 
-Your turn (x)
+Your turn (X)
    |   |
 ---+---+---
    |   |
@@ -20,24 +20,24 @@ Your turn (x)
    |   |
 > 2 2
 The computer played at 1, 3
-Your turn (x)
-   |   | o
+Your turn (X)
+   |   | O
 ---+---+---
-   | x |
+   | X |
 ---+---+---
    |   |
 > 1 1
 The computer played at 3, 3
-Your turn (x)
- x |   | o
+Your turn (X)
+ X |   | O
 ---+---+---
-   | x |
+   | X |
 ---+---+---
-   |   | o
+   |   | O
 > ...
 ```
 
-By default x plays first and is controlled by a human player (you) whereas o
+By default `X` plays first and is controlled by a human player (you) whereas `O`
 plays second and is controller by the computer.
 
 Here are some other ways to run the game:
@@ -67,10 +67,10 @@ The game is decomposed into a [library](src) and an [executable](cli).
 
 The library consists of 5 modules:
 
-1. [XO.Mark](src/XO/Mark.hs) contains the x's and o's a player uses to mark an
-   available space.
-2. [XO.Grid](src/XO/Grid.hs) provides a 3x3 grid that can contain either spaces
-   or marks.
+1. [XO.Mark](src/XO/Mark.hs) contains the X's and O's a player uses to mark an
+   available tile.
+2. [XO.Grid](src/XO/Grid.hs) provides a 3x3 grid that can contain either marked
+   or unmarked tiles.
 3. [XO.Game](src/XO/Game.hs) exposes an API that is used to enforce the game
    logic for Tic-tac-toe.
 4. [XO.AI](src/XO/AI.hs) implements a minimax algorithm to determine the best
@@ -101,13 +101,13 @@ interface.
 ```haskell
 >>> import XO.Mark as Mark
 >>> X
-x
+X
 >>> O
-o
+O
 >>> Mark.swap X
-o
+O
 >>> Mark.swap O
-x
+X
 >>> :t X
 X :: Mark
 ```
@@ -118,33 +118,33 @@ X :: Mark
 >>> import XO.Grid as Grid
 >>> Grid.empty
 .........
->>> Grid.set (0,0) X Grid.empty
-x........
->>> Grid.set (2,2) O (Grid.set (0,0) X Grid.empty)
-x.......o
+>>> Grid.set (0, 0) X Grid.empty
+X........
+>>> Grid.set (2, 2) O (Grid.set (0, 0) X Grid.empty)
+X.......O
 
->>> Grid.inBounds (2,3)
+>>> Grid.inBounds (2, 3)
 False
 
->>> let grid = Grid.set (2,2) O (Grid.set (0,0) X Grid.empty)
+>>> let grid = Grid.set (2, 2) O (Grid.set (0, 0) X Grid.empty)
 
->>> Grid.isAvailable (0,0) grid
+>>> Grid.isAvailable (0, 0) grid
 False
->>> Grid.isAvailable (1,1) grid
+>>> Grid.isAvailable (1, 1) grid
 True
 
 >>> Grid.availablePositions grid
-[(0,1),(0,2),(1,0),(1,1),(1,2),(2,0),(2,1)]
+[(0, 1), (0, 2), (1, 0), (1, 1), (1, 2), (2, 0), (2, 1)]
 
 >>> Grid.toList grid
-[Just x,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Nothing,Just o]
+[Just X, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Just O]
 ```
 
 Notice that the grid doesn't care about Tic-tac-toe's game logic so it's
 possible to do the following:
 
 ```haskell
->>> let badGrid = Grid.set (0,1) X (Grid.set (1,1) X Grid.empty)
+>>> let badGrid = Grid.set (0, 1) X (Grid.set (1, 1) X Grid.empty)
 ```
 
 `XO.Game` is used to enforce the game logic.
@@ -155,27 +155,24 @@ possible to do the following:
 >>> import XO.Game as Game
 
 >>> let game0 = Game.new X
-.........; x
--- The grid is empty and it's x's turn to play
+-- The grid is empty and it's X's turn to play
 
->>> let Right game1 = Game.play (0,0) game0
-x........; o
--- x was marked at (0,0) and it's now o's turn to play
+>>> let Right game1 = Game.play (0, 0) game0
+-- X was marked at (0, 0) and it's now O's turn to play
 
->>> let Right game2 = Game.play (2,2) game1
-x.......o; x
--- o was marked at (2,2) and it's now x's turn to play and so on ...
+>>> let Right game2 = Game.play (2, 2) game1
+-- O was marked at (2, 2) and it's now X's turn to play and so on ...
 
->>> Game.play (0,0) game2
+>>> Game.play (0, 0) game2
 Left Unavailable
 
->>> Game.play (2,3) game2
+>>> Game.play (2, 3) game2
 Left OutOfBounds
 
 >>> Game.grid game2
-x.......o
+X.......O
 >>> Game.turn game2
-x
+X
 >>> Game.outcome game2
 Nothing
 ```
@@ -189,42 +186,38 @@ that it's impossible to violate the rules of Tic-tac-toe.
 >>> import XO.AI as AI
 
 >>> AI.getPositions game2
-[(0,2),(2,0)]
--- If x is marked at one of these positions then with perfect play x can win
+[(0, 2), (2, 0)]
+-- If X is marked at one of these positions then with perfect play X can win
 
->>> let Right game3 = Game.play (0,2) game2
-x.x.....o; o
+>>> let Right game3 = Game.play (0, 2) game2
 
->>> let Right game4 = Game.play (0,1) game3
-xox.....o; x
+>>> let Right game4 = Game.play (0, 1) game3
 
 >>> AI.getPositions game4
-[(2,0)]
+[(2, 0)]
 
->>> let Right game5 = Game.play (2,0) game4
-xox...x.o; o
+>>> let Right game5 = Game.play (2, 0) game4
 
 --    0   1   2
--- 0  x | o | x
+-- 0  X | O | X
 --   ---+---+---
 -- 1    |   |
 --   ---+---+---
--- 2  x |   | o
+-- 2  X |   | O
 --
--- You see, x's win is inevitable now
+-- You see, X's win is inevitable now
 
->>> let Right game6 = Game.play (1,0) game5
+>>> let Right game6 = Game.play (1, 0) game5
 >>> AI.getPositions game6
-[(1,1)]
+[(1, 1)]
 
->>> let Right game7 = Game.play (1,1) game6
-xoxox.x.o; x; win
--- x won
+>>> let Right game7 = Game.play (1, 1) game6
+-- X won
 
 >>> Game.grid game7
-xoxox.x.o
+XOXOX.X.O
 >>> Game.turn game7
-x
+X
 >>> Game.outcome game7
 Just Win
 ```

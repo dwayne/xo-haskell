@@ -1,19 +1,11 @@
 -- | @X@s and @O@s.
-module XO.Mark (Mark(..), swap) where
-
-
--- | A player can mark a space using either an @X@ or an @O@.
-data Mark = X | O deriving Eq
-
-
--- | >>> show X
--- "x"
 --
--- >>> show O
--- "o"
-instance Show Mark where
-  show X = "x"
-  show O = "o"
+-- The symbols that can be marked on tiles.
+module XO.Mark (Mark(X, O), swap) where
+
+
+-- | A player can mark a tile using either an @X@ or an @O@.
+data Mark = X | O deriving (Eq, Show)
 
 
 -- | Switches one mark for the other.

@@ -1,5 +1,6 @@
--- | The game logic. It enforces the rules of Tic-tac-toe and maintains a valid
--- grid.
+-- | The game logic for Tic-tac-toe.
+--
+-- The rules of Tic-tac-toe are enforced and a valid grid is maintained.
 --
 -- To create a new game call the 'new' function.
 --
@@ -8,7 +9,7 @@
 -- This creates a new game where the first player uses mark 'X'.
 --
 -- To play a game you call the 'play' function with the position you want to
--- mark on the grid.
+-- mark.
 --
 -- >>> let Right game1 = play (1, 1) game0
 --
@@ -27,18 +28,18 @@
 --
 -- @
 --    0   1   2
--- 0    |   | o
+-- 0    |   | O
 --   ---+---+---
--- 1    | x |
+-- 1    | X |
 --   ---+---+---
 -- 2    |   |
 -- @
 --
 -- History:
 --
---   * x played at (1, 1)
---   * o played at (0, 2)
---   * x to play
+--   * X played at (1, 1)
+--   * O played at (0, 2)
+--   * X to play
 --
 -- Game play continues until either one of the players wins or the game is
 -- squashed. You can determine whether or not a game is over by querying the
@@ -54,23 +55,29 @@
 -- to use the 'renew' function if you want the following:
 --
 --   * the winning player gets to play first in the next game, or
---   * if the game was squashed the player that didn't play first in this game
---     gets to play first in the next game, i.e. the first player alternates.
+--   * if the game was squashed the player that didn't play first in the
+--     completed game gets to play first in the next game,
+--     i.e. the first player alternates.
 module XO.Game
   ( Game
+
   -- * Create
   , new
+
   -- * Game play
-  , play, Error(..)
+  , play, Error(OutOfBounds, Unavailable)
   , renew
+
   -- * Query
-  , grid, turn
-  , Outcome(..), outcome
+  , availablePositions
+  , grid, turn, lastPosition
+  , Outcome(Win, Squash), outcome
   )
   where
 
 
-import XO.Grid as Grid
+import qualified XO.Grid as Grid
+import XO.Grid (Grid, Position)
 import XO.Mark as Mark
 import XO.Referee as Referee
 
@@ -78,70 +85,62 @@ import XO.Referee as Referee
 -- | An abstract data type for tracking a game of Tic-tac-toe. The API built
 -- for it enforces the game logic of Tic-tac-toe.
 data Game
-  = Playing Grid Mark
-  | GameOver Grid Mark Outcome
+  = Start Grid Mark
+  | Play Grid Mark Position
+  | GameOver Grid Mark Position Outcome
 
 
--- | Useful for debugging purposes.
+-- | Starts a new game of Tic-tac-toe such that the first player uses mark.
 --
--- >>> show game2
--- "..o.x....; x"
-instance Show Game where
-  show (Playing grid mark) =
-    show grid ++ "; " ++ show mark
-
-  show (GameOver grid mark Win) =
-    show grid ++ "; " ++ show mark ++ "; win"
-
-  show (GameOver grid mark Squash) =
-    show grid ++ "; " ++ show mark ++ "; squash"
-
-
--- | Starts a new game of Tic-tac-toe such that the first player uses the given
--- mark. For e.g.
+-- For e.g.
 --
 -- >>> let game = new O
 --
 -- The grid managed by @game@ will be empty and the first player will use the
 -- mark @O@.
 new :: Mark -> Game
-new = Playing Grid.empty
+new = Start Grid.empty
 
 
--- | Suppose it's @X@'s turn. Then, 'play' attempts to place @X@ at the given
--- position on the grid.
+-- | Suppose it's @X@'s turn. Then, 'play' attempts to mark @X@ on the tile at
+-- the given position.
 --
 -- 1. If the position is not within the boundaries of the grid then
 --    @Left 'OutOfBounds'@ is returned.
 --
--- 2. If a mark already occupies the position then @Left 'Unavailable'@ is
---    returned.
+-- 2. If the tile at the position is already marked then
+--    @Left 'Unavailable'@ is returned.
 --
--- 3. Otherwise the mark is placed at the position and an updated game is
+-- 3. Otherwise the tile at the position is marked and an updated game is
 --    returned.
 play :: Position -> Game -> Either Error Game
-play p (Playing grid mark) =
+play p (Start grid mark)  = checkedPlay p mark grid
+play p (Play grid mark _) = checkedPlay p mark grid
+play _ game               = Right game
+
+
+checkedPlay :: Position -> Mark -> Grid -> Either Error Game
+checkedPlay p mark grid =
   if Grid.inBounds p then
     if Grid.isAvailable p grid then
-      Right (playMark p mark grid)
+      Right (uncheckedPlay p mark grid)
     else
       Left Unavailable
   else
     Left OutOfBounds
-play _ game = Right game
 
 
-playMark :: Position -> Mark -> Grid -> Game
-playMark p mark grid =
+uncheckedPlay :: Position -> Mark -> Grid -> Game
+uncheckedPlay p mark grid =
   let
     nextGrid = Grid.set p mark grid
   in
     case Referee.unsafeDecide nextGrid mark of
       Nothing ->
-        Playing nextGrid (Mark.swap mark)
+        Play nextGrid (Mark.swap mark) p
 
       Just outcome ->
-        GameOver nextGrid mark outcome
+        GameOver nextGrid mark p outcome
 
 
 -- | The possible errors that can occur when attempting to play the game.
@@ -151,20 +150,34 @@ data Error
   deriving (Eq, Show)
 
 
--- | Starts a new game. If the game is squashed then the first player of the
--- new game is changed, otherwise the first player of the new game is whoever
--- had the next play or won in the given game.
+-- | Starts a new game.
+--
+-- If the game is squashed then the first player of the new game is changed,
+-- otherwise the first player of the new game is whoever had the next play or
+-- won in the completed game.
 renew :: Game -> Game
-renew (Playing _ m) = new m
-renew (GameOver _ m Win) = new m
-renew (GameOver _ m Squash) = new (Mark.swap m)
+renew (Start _ m)             = new m
+renew (Play _ m _)            = new m
+renew (GameOver _ m _ Win)    = new m
+renew (GameOver _ m _ Squash) = new (Mark.swap m)
 
 
--- | Returns the grid that's managed by the game. The returned grid is always
--- valid.
+-- | When the game is in-progress it returns the positions of the unmarked
+-- tiles. However, when the game is over no play is possible and so no
+-- positions are returned.
+availablePositions :: Game -> [Position]
+availablePositions (Start grid _)  = Grid.availablePositions grid
+availablePositions (Play grid _ _) = Grid.availablePositions grid
+availablePositions _               = []
+
+
+-- | Returns the grid that's managed by the game.
+--
+-- The returned grid is always valid.
 grid :: Game -> Grid
-grid (Playing g _) = g
-grid (GameOver g _ _) = g
+grid (Start g _)        = g
+grid (Play g _ _)       = g
+grid (GameOver g _ _ _) = g
 
 
 -- | The returned mark is to be interpreted in one of three ways:
@@ -176,14 +189,22 @@ grid (GameOver g _ _) = g
 --   * If the game is over and squashed then the returned mark represents the
 --     mark of the player that squashed the game.
 turn :: Game -> Mark
-turn (Playing _ m) = m
-turn (GameOver _ m _) = m
+turn (Start _ m)        = m
+turn (Play _ m _)       = m
+turn (GameOver _ m _ _) = m
 
 
--- | Returns whether or not the game is over and why.
+-- | Returns the position of the last tile to be marked, if any.
+lastPosition :: Game -> Maybe Position
+lastPosition (Start _ _)        = Nothing
+lastPosition (Play _ _ p)       = Just p
+lastPosition (GameOver _ _ p _) = Just p
+
+
+-- | Returns the outcome of the game.
 --
 -- It will be one of @Nothing@ (which means the game is not over), @Just 'Win'@
 -- or @Just 'Squash'@.
 outcome :: Game -> Maybe Outcome
-outcome (GameOver _ _ o) = Just o
-outcome _ = Nothing
+outcome (GameOver _ _ _ o) = Just o
+outcome _                  = Nothing

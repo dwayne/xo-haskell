@@ -15,9 +15,9 @@ import XO.Mark
 import XO.CLI.Player as Player
 
 
-run :: Player -> Player -> Mark -> IO ()
-run x o first =
-  putStrLn displayIntro >> runLoop x o (Player.numHumans x o) (Game.new first)
+run :: Mark -> Player -> Player -> IO ()
+run first x o =
+  putStrLn showIntro >> runLoop x o (Player.numHumans x o) (Game.new first)
 
 
 runLoop :: Player -> Player -> Int -> Game -> IO ()
@@ -29,7 +29,7 @@ runLoop x o humans game = do
 
   playing <- getContinue
 
-  when playing (runLoop x o humans (Game.renew finalGame))
+  when playing $ runLoop x o humans (Game.renew finalGame)
 
 
 playOneGame :: Player -> Player -> Int -> Game -> IO Game
@@ -46,21 +46,15 @@ playOneGame currentPlayer nextPlayer humans game = do
 
 playOneTurn :: Player -> Int -> Game -> IO Game
 playOneTurn Human humans game = do
-  let mark = show (Game.turn game)
-
-  if humans == 2 then
-    putStrLn (mark ++ "'s turn")
-  else
-    putStrLn ("Your turn (" ++ mark ++ ")")
-
-  putStrLn (displayGrid (Game.grid game))
+  putStrLn $ showTurn humans (Game.turn game)
+  putStrLn $ showGrid (Game.grid game)
 
   playOneTurnLoop game
 
 playOneTurn Computer humans game = do
-  position <- randomElem (AI.getPositions game)
+  position <- randomElem $ AI.getPositions game
 
-  putStrLn ("The computer played at " ++ displayPosition position)
+  putStrLn $ "The computer played at " ++ showPosition position
 
   let Right nextGame = Game.play position game
   return nextGame
@@ -87,7 +81,7 @@ handleGameOver :: Outcome -> Player -> Int -> Game -> IO Game
 handleGameOver outcome player humans game = do
   case (outcome, player, humans) of
     (Win, Human, 2) ->
-      putStrLn ("Congratulations! " ++ show (Game.turn game) ++ " won.")
+      putStrLn $ "Congratulations! " ++ show (Game.turn game) ++ " won."
 
     (Win, Human, 1) ->
       putStrLn "Congratulations! You won."
@@ -98,7 +92,7 @@ handleGameOver outcome player humans game = do
     (Squash, _, _) ->
       putStrLn "Game squashed."
 
-  putStrLn (displayGrid (Game.grid game))
+  putStrLn $ showGrid (Game.grid game)
 
   return game
 
@@ -122,6 +116,7 @@ getContinue = do
 getPosition :: Grid -> Bool -> IO Position
 getPosition grid showHelp = do
   s <- getInput "> "
+
   case parsePosition s of
     Nothing ->
       if showHelp then do
@@ -129,8 +124,8 @@ getPosition grid showHelp = do
 
         putStrLn "Try again, but this time enter a position in the format \
           \\"r c\","
-        putStrLn ("where 1 <= r <= 3 and 1 <= c <= 3, for e.g. \"" ++
-          show r ++ " " ++ show c ++ "\"")
+        putStrLn $ "where 1 <= r <= 3 and 1 <= c <= 3, for e.g. \"" ++
+          show r ++ " " ++ show c ++ "\""
 
         getPosition grid False
       else
@@ -138,6 +133,10 @@ getPosition grid showHelp = do
 
     Just position ->
       return position
+
+
+firstAvailablePosition :: Grid -> Position
+firstAvailablePosition = increment . head . Grid.availablePositions
 
 
 getInput :: String -> IO String
@@ -167,15 +166,11 @@ parseInt :: String -> Maybe Int
 parseInt input = Read.readMaybe input
 
 
-firstAvailablePosition :: Grid -> Position
-firstAvailablePosition = increment . head . Grid.availablePositions
-
-
 -- OUTPUT
 
 
-displayIntro :: String
-displayIntro =
+showIntro :: String
+showIntro =
   List.intercalate "\n"
     [ "Welcome to Tic-tac-toe"
     , "Play as many games as you want"
@@ -184,36 +179,44 @@ displayIntro =
     ]
 
 
-displayPosition :: Position -> String
-displayPosition p = show r ++ ", " ++ show c
+showTurn :: Int -> Mark -> String
+showTurn humans mark =
+  if humans == 2 then
+    show mark ++ "'s turn"
+  else
+    "Your turn (" ++ show mark ++ ")"
+
+
+showGrid :: Grid -> String
+showGrid = showTiles . Grid.toList
+  where
+    showTiles [a, b, c, d, e, f, g, h, i] =
+      List.intercalate "\n"
+        [ showRow a b c
+        , showSep
+        , showRow d e f
+        , showSep
+        , showRow g h i
+        ]
+
+    showRow a b c =
+      List.intercalate "|"
+        [ showTile a
+        , showTile b
+        , showTile c
+        ]
+
+    showTile Nothing  = "   "
+    showTile (Just X) = " X "
+    showTile (Just O) = " O "
+
+    showSep = "---+---+---"
+
+
+showPosition :: Position -> String
+showPosition p = show r ++ ", " ++ show c
   where
     (r, c) = increment p
-
-
-displayGrid :: Grid -> String
-displayGrid = displayTiles . Grid.toList
-  where
-    displayTiles [a, b, c, d, e, f, g, h, i] =
-      List.intercalate "\n"
-        [ displayRow a b c
-        , displaySep
-        , displayRow d e f
-        , displaySep
-        , displayRow g h i
-        ]
-
-    displayRow a b c =
-      List.intercalate "|"
-        [ displayTile a
-        , displayTile b
-        , displayTile c
-        ]
-
-    displayTile Nothing = "   "
-    displayTile (Just X) = " x "
-    displayTile (Just O) = " o "
-
-    displaySep = "---+---+---"
 
 
 -- HELPERS

@@ -1,12 +1,11 @@
--- | A 3x3 Tic-tac-toe grid which can contain either spaces or 'XO.Mark.Mark's.
+-- | A 3x3 Tic-tac-toe grid.
 --
--- It is important to note that this API does not restrict the use of the grid
--- to only valid grids, i.e. it is possible to construct grids you will never
--- reach during game play. A valid grid is one that can be reached by following
--- the rules of Tic-tac-toe.
+-- It consists of 9 tiles which can be marked with 'XO.Mark.Mark's.
 --
--- See "XO.Game" for an API that enforces the rules of Tic-tac-toe and
--- maintains a valid grid.
+-- A valid grid is one that can be reached by following the rules of
+-- Tic-tac-toe. However, it is possible to construct invalid grids with this
+-- API, i.e. grids you will never encounter during game play. See "XO.Game" for
+-- an API that enforces the rules of Tic-tac-toe and maintains a valid grid.
 module XO.Grid
   ( Grid, Position
 
@@ -32,7 +31,7 @@ import XO.Mark (Mark)
 
 
 -- | A 3x3 Tic-tac-toe grid.
-data Grid = Grid [(Position, Mark)]
+newtype Grid = Grid [(Position, Mark)]
 
 -- | The first value is the 0-based @row@ and the second value is the 0-based
 -- @column@.
@@ -48,11 +47,9 @@ instance Eq Grid where
 -- "........."
 --
 -- >>> show (set (1,1) O (set (0,0) X empty))
--- "x...o...."
+-- "X...O...."
 instance Show Grid where
-  show grid = map showTile (toList grid)
-    where
-      showTile tile = head (maybe "." show tile)
+  show grid = concatMap (maybe "." show) (toList grid)
 
 
 -- | An empty grid.
@@ -60,12 +57,12 @@ empty :: Grid
 empty = Grid []
 
 
--- | Returns a new grid that contains the mark at the position.
+-- | Returns a new grid that has the mark at the position.
 set :: Position -> Mark -> Grid -> Grid
 set p mark (Grid moves) = Grid ((p, mark):moves)
 
 
--- | Returns 'True' if and only if the grid does not contain a mark at the
+-- | Returns 'True' if and only if the grid does not have a mark at the
 -- position.
 isAvailable :: Position -> Grid -> Bool
 isAvailable p (Grid moves) = p `notIn` moves
@@ -80,11 +77,10 @@ inBounds (r, c) = r >= 0 && r < size && c >= 0 && c < size
 -- | Returns all unmarked positions in
 -- <https://en.wikipedia.org/wiki/Row-_and_column-major_order row-major order>.
 availablePositions :: Grid -> [Position]
-availablePositions (Grid moves) =
-  [p | r <- [0..n], c <- [0..n], let p = (r, c), p `notIn` moves]
+availablePositions (Grid moves) = filter (`notIn` moves) allPositions
 
 
--- | A space or a 'XO.Mark.Mark'.
+-- | A 'Tile' can be marked with a 'XO.Mark.Mark' or it can be unmarked.
 type Tile = Maybe Mark
 
 
@@ -92,17 +88,20 @@ type Tile = Maybe Mark
 -- <https://en.wikipedia.org/wiki/Row-_and_column-major_order row-major order>.
 --
 -- >>> toList (set (1,1) O (set (0,0) X empty))
--- [Just x, Nothing, Nothing, Nothing, Just o, Nothing, Nothing, Nothing, Nothing]
+-- [Just X, Nothing, Nothing, Nothing, Just O, Nothing, Nothing, Nothing, Nothing]
 toList :: Grid -> [Tile]
-toList (Grid moves) = [lookup (r, c) moves | r <- [0..n], c <- [0..n]]
+toList (Grid moves) = map (flip lookup moves) allPositions
 
 
 -- Helpers
 
 
+allPositions :: [Position]
+allPositions = [(r, c) | r <- [0..n], c <- [0..n]]
+
+
 notIn :: Eq a => a -> [(a, b)] -> Bool
-key `notIn` assocs =
-  isNothing (lookup key assocs)
+key `notIn` assocs = isNothing (lookup key assocs)
 
 
 size :: Int

@@ -3,6 +3,8 @@ module Test.XO.Grid (spec) where
 
 import Test.Hspec
 
+import Test.Helper
+
 import Data.Maybe (isNothing)
 
 import XO.Mark
@@ -33,7 +35,7 @@ setSpec = do
   describe "set" $ do
     context "when position is (1, 1) and mark is X" $ do
       it "returns a new grid with an X at (1, 1)" $ do
-        let grid = Grid.set (1, 1) X Grid.empty
+        let grid = setPositions X [(1, 1)]
         let actual = head (drop 4 (Grid.toList grid))
 
         actual `shouldBe` Just X
@@ -50,7 +52,7 @@ isAvailableSpec = do
 
     context "when an O is at (0, 1)" $ do
       it "returns False" $ do
-        let grid = Grid.set (0, 1) O Grid.empty
+        let grid = setPositions O [(0, 1)]
         let actual = Grid.isAvailable (0, 1) grid
 
         actual `shouldBe` False
@@ -88,11 +90,7 @@ availablePositionsSpec = do
 
     context "when (0, 0), (0, 2), (1, 1), (2, 0) and (2, 2) are marked" $ do
       it "returns the unmarked positions (0, 1), (1, 0), (1, 2) and (2, 1) in that order" $ do
-        let grid = Grid.set (0, 0) X $
-                     Grid.set (2, 2) O $
-                       Grid.set (1, 1) X $
-                         Grid.set (0, 2) O $
-                           Grid.set (2, 0) X Grid.empty
+        let grid = setPositions X [(2, 0), (0, 2), (1, 1), (2, 2), (0, 0)]
         let actual = Grid.availablePositions grid
         let expected = [(0, 1), (1, 0), (1, 2), (2, 1)]
 
@@ -103,7 +101,7 @@ toListSpec :: Spec
 toListSpec = do
   describe "toList" $ do
     it "returns a list of tiles in row-major order" $ do
-      let actual = Grid.toList (Grid.set (1,1) O (Grid.set (0,0) X Grid.empty))
+      let actual = Grid.toList $ setPositions X [(0, 0), (1, 1)]
       let expected = [ Just X, Nothing, Nothing
                      , Nothing, Just O, Nothing
                      , Nothing, Nothing, Nothing

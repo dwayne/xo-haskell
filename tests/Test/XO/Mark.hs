@@ -16,12 +16,12 @@ showSpec :: Spec
 showSpec =
   describe "show" $ do
     context "when X" $ do
-      it "returns \"x\"" $ do
-        show X `shouldBe` "x"
+      it "returns \"X\"" $ do
+        show X `shouldBe` "X"
 
     context "when O" $ do
-      it "returns \"o\"" $ do
-        show O `shouldBe` "o"
+      it "returns \"O\"" $ do
+        show O `shouldBe` "O"
 
 
 swapSpec :: Spec

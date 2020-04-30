@@ -1,8 +1,4 @@
-module XO.CLI.Options
-  ( Options(..)
-  , parseOptions
-  )
-  where
+module XO.CLI.Options (Options(Options), parseOptions) where
 
 
 import Options.Applicative
@@ -56,7 +52,7 @@ options = Options
       <> metavar "N"
       <> value 25
       <> showDefault
-      <> help "The number of rounds to play between two computer players, N>0"
+      <> help "The number of rounds to play between two computer players, N>=1"
       )
   where
     playerHelp = "PLAYER=human|computer"
@@ -68,9 +64,9 @@ options = Options
 player :: ReadM Player
 player = eitherReader parsePlayer
   where
-    parsePlayer "human" = Right Human
+    parsePlayer "human"    = Right Human
     parsePlayer "computer" = Right Computer
-    parsePlayer _ = Left "expected human|computer"
+    parsePlayer _          = Left "expected human|computer"
 
 
 mark :: ReadM Mark
@@ -78,7 +74,7 @@ mark = eitherReader parseMark
   where
     parseMark "x" = Right X
     parseMark "o" = Right O
-    parseMark _ = Left "expected x|o"
+    parseMark _   = Left "expected x|o"
 
 
 positive :: ReadM Int

@@ -8,8 +8,5 @@ import XO.CLI.Player
 
 
 run :: Options -> IO ()
-run (Options Computer Computer first rounds) =
-  Noninteractive.run first rounds
-
-run (Options x o first _) =
-  Interactive.run x o first
+run (Options Computer Computer first rounds) = Noninteractive.run first rounds
+run (Options x        o        first _)      = Interactive.run first x o

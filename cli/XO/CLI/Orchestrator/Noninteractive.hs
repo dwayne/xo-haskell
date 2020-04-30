@@ -1,52 +1,56 @@
 module XO.CLI.Orchestrator.Noninteractive (run) where
 
 
-import XO.AI as AI
-import XO.Game as Game
-import XO.Mark
+import Data.Maybe (maybe)
+import qualified System.Random as Random
+
+import XO.AI (getPositions)
+import XO.Game (Game, Outcome(Win, Squash), new, outcome, play, renew, turn)
+import XO.Mark (Mark)
 
 
 run :: Mark -> Int -> IO ()
-run first rounds = runLoop rounds (Game.new first)
+run = runLoop . new
 
 
-runLoop :: Int -> Game -> IO ()
-runLoop rounds game
+runLoop :: Game -> Int -> IO ()
+runLoop game rounds
   | rounds == 0 = return ()
-  | otherwise = do
+  | otherwise   = do
     finalGame <- playOneGame game
     if rounds == 1 then
       putStrLn ""
     else
-      runLoop (rounds-1) (Game.renew finalGame)
+      runLoop (renew finalGame) (rounds-1)
 
 
 playOneGame :: Game -> IO Game
 playOneGame game = do
   nextGame <- playOneTurn game
-
-  case Game.outcome nextGame of
-    Nothing ->
-      playOneGame nextGame
-
-    Just outcome ->
-      handleGameOver outcome nextGame
+  maybe (playOneGame nextGame) (handleGameOver nextGame) (outcome nextGame)
 
 
 playOneTurn :: Game -> IO Game
-playOneTurn game = return nextGame
+playOneTurn game = do
+  position <- randomElem $ getPositions game
+  let Right nextGame = play position game
+  return nextGame
+
+
+handleGameOver :: Game -> Outcome -> IO Game
+handleGameOver game outcome = putStr (showOutcome outcome game) >> return game
+
+
+showOutcome :: Outcome -> Game -> String
+showOutcome Win    = show . turn
+showOutcome Squash = const "."
+
+
+-- HELPERS
+
+
+randomElem :: [a] -> IO a
+randomElem xs = rand >>= (return . ((!!) xs))
   where
-    position = head (AI.getPositions game)
-    Right nextGame = Game.play position game
-
-
-handleGameOver :: Outcome -> Game -> IO Game
-handleGameOver outcome game = do
-  case outcome of
-    Win ->
-      putStr (show (Game.turn game))
-
-    Squash ->
-      putStr "."
-
-  return game
+    rand = Random.getStdRandom (Random.randomR (0, n-1))
+    n = length xs
