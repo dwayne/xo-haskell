@@ -76,6 +76,8 @@ module XO.Game
   where
 
 
+import qualified Data.List as List
+
 import qualified XO.Grid as Grid
 import XO.Grid (Grid, Position)
 import XO.Mark as Mark
@@ -88,6 +90,49 @@ data Game
   = Start Grid Mark
   | Play Grid Mark Position
   | GameOver Grid Mark Position Outcome
+
+
+-- | let game0 = new X
+--
+-- >>> show game0
+-- "{ grid = ........., turn = X }"
+--
+-- let Right game1 = play (1, 1) game0
+--
+-- >>> show game1
+-- "{ grid = X........, turn = O, lastPosition = (1,1) }"
+instance Show Game where
+  show (Start grid turn) =
+    showInBrackets [showGrid grid, showTurn turn]
+  show (Play grid turn p) =
+    showInBrackets [showGrid grid, showTurn turn, showLastPosition p]
+  show (GameOver grid turn p o) =
+    showInBrackets
+      [ showGrid grid
+      , showTurn turn
+      , showLastPosition p
+      , showOutcome o
+      ]
+
+
+showGrid :: Grid -> String
+showGrid grid = "grid = " ++ show grid
+
+
+showTurn :: Mark -> String
+showTurn turn = "turn = " ++ show turn
+
+
+showLastPosition :: Position -> String
+showLastPosition p = "lastPosition = " ++ show p
+
+
+showOutcome :: Outcome -> String
+showOutcome o = "outcome = " ++ show o
+
+
+showInBrackets :: [String] -> String
+showInBrackets ss = "{ " ++ List.intercalate ", " ss ++ " }"
 
 
 -- | Starts a new game of Tic-tac-toe such that the first player uses mark.

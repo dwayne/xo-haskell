@@ -15,6 +15,7 @@ spec = do
   newSpec
   playSpec
   renewSpec
+  showSpec
 
 
 newSpec :: Spec
@@ -117,3 +118,30 @@ renewSpec =
         Game.turn newGame `shouldBe` X
         Game.grid newGame `shouldBe` Grid.empty
         Game.outcome newGame `shouldBe` Nothing
+
+
+showSpec :: Spec
+showSpec =
+  describe "show" $ do
+    context "when new" $ do
+      it "returns the grid and turn" $ do
+        let game = Game.new X
+
+        show game `shouldBe` "{ grid = ........., turn = X }"
+
+    context "after a few moves" $ do
+      it "returns the grid, turn and lastPosition" $ do
+        let Right game = playPositions O [ (1, 1), (0, 2), (0, 0), (2, 2) ]
+
+        show game `shouldBe` "\
+          \{ grid = O.X.O...X, turn = O, lastPosition = (2,2) }"
+
+    context "when game is over" $ do
+      it "returns the grid, turn, lastPosition and outcome" $ do
+        let Right game = playPositions X [ (1, 1), (0, 2), (2, 0)
+                                         , (1, 2), (2, 2), (2, 1)
+                                         , (0, 0)
+                                         ]
+
+        show game `shouldBe` "\
+          \{ grid = X.O.XOXOX, turn = X, lastPosition = (0,0), outcome = Win }"
