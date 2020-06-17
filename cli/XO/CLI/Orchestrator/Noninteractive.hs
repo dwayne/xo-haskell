@@ -2,11 +2,12 @@ module XO.CLI.Orchestrator.Noninteractive (run) where
 
 
 import Data.Maybe (maybe)
-import qualified System.Random as Random
 
 import XO.AI (getPositions)
 import XO.Game (Game, Outcome(Win, Squash), new, outcome, play, renew, turn)
 import XO.Mark (Mark)
+
+import XO.CLI.Random (randomElem)
 
 
 run :: Mark -> Int -> IO ()
@@ -44,13 +45,3 @@ handleGameOver game outcome = putStr (showOutcome outcome game) >> return game
 showOutcome :: Outcome -> Game -> String
 showOutcome Win    = show . turn
 showOutcome Squash = const "."
-
-
--- HELPERS
-
-
-randomElem :: [a] -> IO a
-randomElem xs = rand >>= (return . ((!!) xs))
-  where
-    rand = Random.getStdRandom (Random.randomR (0, n-1))
-    n = length xs

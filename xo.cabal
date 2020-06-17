@@ -36,6 +36,7 @@ executable xo
     XO.CLI.Orchestrator.Interactive
     XO.CLI.Orchestrator.Noninteractive
     XO.CLI.Player
+    XO.CLI.Random
 
   build-depends:
     base >= 4.12 && < 5,

@@ -4,7 +4,6 @@ module XO.CLI.Orchestrator.Interactive (run) where
 import Control.Monad (when)
 import qualified Data.Char as Char
 import qualified Data.List as List
-import qualified System.Random as Random
 import qualified Text.Read as Read
 
 import qualified XO.AI as AI
@@ -13,6 +12,7 @@ import XO.Grid as Grid
 import XO.Mark
 
 import XO.CLI.Player as Player
+import XO.CLI.Random (randomElem)
 
 
 run :: Mark -> Player -> Player -> IO ()
@@ -228,10 +228,3 @@ increment (r, c) = (r+1, c+1)
 
 decrement :: Position -> Position
 decrement (r, c) = (r-1, c-1)
-
-
-randomElem :: [a] -> IO a
-randomElem xs = rand >>= (return . ((!!) xs))
-  where
-    rand = Random.getStdRandom (Random.randomR (0, n-1))
-    n = length xs
