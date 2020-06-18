@@ -155,12 +155,18 @@ possible to do the following:
 >>> import XO.Game as Game
 
 >>> let game0 = Game.new X
+>>> game0
+{ grid = ........., turn = X }
 -- The grid is empty and it's X's turn to play
 
 >>> let Right game1 = Game.play (0, 0) game0
+>>> game1
+{ grid = X........, turn = O, lastPosition = (0,0) }
 -- X was marked at (0, 0) and it's now O's turn to play
 
 >>> let Right game2 = Game.play (2, 2) game1
+>>> game2
+{ grid = X.......O, turn = X, lastPosition = (2,2) }
 -- O was marked at (2, 2) and it's now X's turn to play and so on ...
 
 >>> Game.play (0, 0) game2
